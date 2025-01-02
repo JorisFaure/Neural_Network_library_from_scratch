@@ -6,7 +6,7 @@ This project showcases the design of a Neural Network capable of forward propaga
 ## Features
 - Fully implemented in Python using only NumPy and Matplotlib.
 - Supports multi-layer architectures.
-- Sigmoid activation function.
+- Sigmoid & Relu activation function.
 - Training uses Mean Squared Error (MSE): 1/2(y_pred - y_ref)^2.
 - Visualizes error evolution through epochs.
 - Support batch training.
@@ -40,7 +40,7 @@ Test your trained model using:
 This project includes a demonstration of the XOR problem:
 `input_set = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])`
 `output_set = np.array([[1], [0], [0], [1]])`
-`nn = NeuralNetwork(layer_sizes=[2, 2, 1], learning_rate=0.2)`
+`nn = NeuralNetwork(layer_sizes=[2, 2, 1], learning_rate=0.2, 'sigmoid')`
 
 `nn.train(input_set, output_set, epochs=15000, batch_size=2)`
 `nn.test(input_set, output_set)`
@@ -49,9 +49,12 @@ This project includes a demonstration of the XOR problem:
 During training, the Mean Squared Error (MSE) evolution is plotted and saved as `error_plot.png`.
 
 ## Limitations
-- Currently supports only the Sigmoid activation function.
 - Error calculation uses MSE.
 
 ## Future Improvements
-- Add support for other activation functions (ReLU, Tanh, etc.).
+- Add support for other activation functions (Tanh, etc...).
 - Extend error functions beyond MSE (e.g., Cross-Entropy).
+
+## Benchmark
+With sigmoid and lr = 0.2, it convergs around 4000 epochs.
+With Relu and lr = 0.05, it convergs in less than 1000 epochs.
