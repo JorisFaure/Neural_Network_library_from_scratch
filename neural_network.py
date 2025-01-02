@@ -4,30 +4,44 @@ import matplotlib.pyplot as plt
 
 class Neuron:
     def __init__(self, input_size):
-        self.weights = np.random.uniform(0.5, 1.0, size=(input_size,))
+        self.weights = np.random.uniform(0.0, 1.0, size=(input_size,))
         self.bias = 0
         self.value = 0
         self.activated_value = 0
+        
+    def activate(self, activation_function):
+        if activation_function == 'sigmoid':
+            self.activated_value = 1 / (1 + np.exp(-self.value))
+        elif activation_function == 'relu':
+            self.activated_value = max(0, self.value)
+        else:
+            raise ValueError(f"Unknown activation function: {activation_function}")
+    
+    def activation_derivative(self, activation_function):
+        if activation_function == 'sigmoid' :
+            return self.activated_value * (1 - self.activated_value)
+        elif activation_function == 'relu':
+            if self.activated_value > 0 :
+                return 1
+            else :
+                return 0
+            
+            
+            
+    # def activate(self):
+    #     self.activated_value = self.sigmoid()
 
-    def sigmoid(self):
-        return 1 / (1 + np.exp(-self.value))
-
-    def sigmoid_derivative(self):
-        return self.activated_value * (1 - self.activated_value)
-
-    def activate(self):
-        self.activated_value = self.sigmoid()
-
-    def forward_pass(self, input_vec):
+    def forward_pass(self, input_vec, activation_function):
         self.value = np.dot(self.weights, input_vec) + self.bias
-        self.activate()
+        self.activate(activation_function)
 
     def cost_derivative_by_layer(self, output_ref) : # (1/2) * 2(y - y_ref)
         return (self.activated_value - output_ref)
 
 class NeuralNetwork:
-    def __init__(self, layer_sizes, learning_rate):
+    def __init__(self, layer_sizes, learning_rate, activation_function):
         self.total_layers = []
+        self.activation_function = activation_function
         for i in range(len(layer_sizes) - 1):
             self.total_layers.append([Neuron(layer_sizes[i]) for _ in range(layer_sizes[i + 1])])
         self.learning_rate = learning_rate
@@ -36,7 +50,7 @@ class NeuralNetwork:
         current_input = input_vec
         for layer in self.total_layers:
             for neuron in layer:
-                neuron.forward_pass(current_input)
+                neuron.forward_pass(current_input, self.activation_function)
             current_input = [neuron.activated_value for neuron in layer]
     
     def update_weights_and_biases(self, weight_gradients, bias_gradients):
@@ -60,7 +74,7 @@ class NeuralNetwork:
         output_layer = self.total_layers[-1]
         output_errors = [] # store the propagate errors from each output neuron to the previous layer 
         for i, neuron in enumerate(output_layer): # Output backprop
-            bias_gradient = neuron.cost_derivative_by_layer(output_vec[i]) * neuron.sigmoid_derivative() # da(L)/dz(L) * dC0/da(L) ***the last term is a(L-1)***
+            bias_gradient = neuron.cost_derivative_by_layer(output_vec[i]) * neuron.activation_derivative(self.activation_function) # da(L)/dz(L) * dC0/da(L) ***the last term is a(L-1)***
             output_errors.append(bias_gradient) # we use this list for propagating the error
             bias_gradients.append(bias_gradient) # we use this list for the bias update
             weight_gradients.append(np.array(layer_outputs[-2]) * bias_gradient)
@@ -74,7 +88,7 @@ class NeuralNetwork:
             hidden_errors = [] # store the propagate errors from each a(L) neuron to the a(L-1) layer
             for j, neuron in enumerate(layer): # we calculate the propagate sum error from layer L to layer L-1 : dC/dz(L-1) = (Σ(dC0/dz(L)) * w(L)) * (da(L-1)/dz(L-1))
                 s = sum(next_layer[k].weights[j] * errors[-1][k] for k in range(len(next_layer))) # error[-1][k] represent the errors of each neuron of the last layer (-1 is the last layer append to the errors list)
-                bias_gradient = s * neuron.sigmoid_derivative()
+                bias_gradient = s * neuron.activation_derivative(self.activation_function)
                 hidden_errors.append(bias_gradient)
                 bias_gradients.append(bias_gradient)
                 weight_gradients.append(np.array(layer_outputs[l]) * bias_gradient) # bias_gradient * dC0/da(L-1)
@@ -138,12 +152,13 @@ class NeuralNetwork:
 # XOR example
 input_set = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
 output_set = np.array([[0], [1], [1], [0]])
-nn = NeuralNetwork(layer_sizes=[2, 2, 1], learning_rate=0.2)
+#with Relu, put a little learning rate like 0.05 because the gradients can be very high, with sigmoid we can put 0.2
+nn = NeuralNetwork(layer_sizes=[2, 2, 1], learning_rate=0.05, activation_function='relu')
 
 # Mesure training time
 print("Starting training...")
 start_time = time.time()
-nn.train(input_set, output_set, epochs=15000, batch_size=2)
+nn.train(input_set, output_set, epochs=1001, batch_size=1)
 end_time = time.time()
 print("Training over")
 
