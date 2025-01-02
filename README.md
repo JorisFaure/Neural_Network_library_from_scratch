@@ -9,6 +9,8 @@ This project showcases the design of a Neural Network capable of forward propaga
 - Sigmoid activation function.
 - Training uses Mean Squared Error (MSE): 1/2(y_pred - y_ref)^2.
 - Visualizes error evolution through epochs.
+- Support batch training.
+- Shuffle training samples.
 - XOR problem demo included.
 
 ## How to Use
@@ -28,7 +30,7 @@ Create a neural network instance using:
 
 ### Train the Neural Network
 Train your model with:
-`nn.train(input_data, output_data, epochs=15000)`
+`nn.train(input_data, output_data, epochs=n, batch_size=s)`
 
 ### Test the Neural Network
 Test your trained model using:
@@ -40,7 +42,7 @@ This project includes a demonstration of the XOR problem:
 `output_set = np.array([[1], [0], [0], [1]])`
 `nn = NeuralNetwork(layer_sizes=[2, 2, 1], learning_rate=0.2)`
 
-`nn.train(input_set, output_set, epochs=15000)`
+`nn.train(input_set, output_set, epochs=15000, batch_size=2)`
 `nn.test(input_set, output_set)`
 
 ## Training Visualization
@@ -48,10 +50,8 @@ During training, the Mean Squared Error (MSE) evolution is plotted and saved as 
 
 ## Limitations
 - Currently supports only the Sigmoid activation function.
-- Training is performed on a sample-by-sample basis (no batch training).
 - Error calculation uses MSE.
 
 ## Future Improvements
 - Add support for other activation functions (ReLU, Tanh, etc.).
-- Implement batch training for larger datasets.
 - Extend error functions beyond MSE (e.g., Cross-Entropy).
