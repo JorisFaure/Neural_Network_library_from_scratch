@@ -38,6 +38,14 @@ class NeuralNetwork:
             for neuron in layer:
                 neuron.forward_pass(current_input)
             current_input = [neuron.activated_value for neuron in layer]
+    
+    def update_weights_and_biases(self, weight_gradients, bias_gradients):
+        i = 0
+        for l in range(len(self.total_layers) - 1, -1, -1):
+            for neuron in self.total_layers[l]:
+                neuron.weights -= self.learning_rate * weight_gradients[i]
+                neuron.bias -= self.learning_rate * bias_gradients[i]
+                i += 1
 
     def backpropagation(self, output_vec, input_vec):
         layer_outputs = [input_vec]
@@ -71,28 +79,45 @@ class NeuralNetwork:
                 bias_gradients.append(bias_gradient)
                 weight_gradients.append(np.array(layer_outputs[l]) * bias_gradient) # bias_gradient * dC0/da(L-1)
             errors.append(hidden_errors) # we will use the error of the a(l-1) for the next iteration with error[-1]
-        
-        #weights and biases update
-        i = 0
-        for l in range(len(self.total_layers) - 1, -1, -1):
-            for neuron in self.total_layers[l]:
-                neuron.weights -= self.learning_rate * weight_gradients[i] #we update each weight list of each neurons
-                neuron.bias -= self.learning_rate * bias_gradients[i] #we update each bias of each neurons
-                i+=1
 
-    def train(self, input_data, output_data, epochs):
+        return (weight_gradients, bias_gradients)
+
+    def train(self, input_data, output_data, epochs, batch_size):
         errors = []
         for epoch in range(epochs):
+            # shuffle the data while keeping pairs of input/output
+            permutation = np.random.permutation(len(input_data))
+            input_data = input_data[permutation]
+            output_data = output_data[permutation]
+            
             total_error = 0
-            for i, sample in enumerate(input_data):
-                self.forward_pass(sample)
-                self.backpropagation(output_data[i], sample)
-                #calculate total error
-                total_error += sum((neuron.activated_value - output_data[i][j])**2 for j, neuron in enumerate(self.total_layers[-1]))
+            for i in range(0, len(input_data), batch_size):
+                batch_input = input_data[i:i+batch_size]
+                batch_output = output_data[i:i+batch_size]
+                batch_weight_gradients = []
+                batch_bias_gradients = []
+                for j, sample in enumerate(batch_input):
+                    self.forward_pass(sample)
+                    gradients = self.backpropagation(batch_output[j], sample)
+                    if batch_weight_gradients == []:
+                        batch_weight_gradients = gradients[0]
+                        batch_bias_gradients = gradients[1]
+                    else: # we aggregate all previous gradients with the one of the current sample
+                        batch_weight_gradients = [wg + g for wg, g in zip(batch_weight_gradients, gradients[0])]
+                        batch_bias_gradients = [bg + g for bg, g in zip(batch_bias_gradients, gradients[1])]
+                    # calculate total error
+                    total_error += sum((neuron.activated_value - batch_output[j][k])**2 for k, neuron in enumerate(self.total_layers[-1]))
+                
+                # Average gradients over the batch
+                avg_weight_gradients = [wg / batch_size for wg in batch_weight_gradients]
+                avg_bias_gradients = [bg / batch_size for bg in batch_bias_gradients]
+                self.update_weights_and_biases(avg_weight_gradients, avg_bias_gradients)
             errors.append(total_error / len(input_data))
             if epoch % 1000 == 0:
                 # show the MSE every x epoch
                 print(f"Epoch {epoch}, MSE: {errors[-1]}")
+                
+        #create the error plot
         plt.plot(range(epochs), errors, label='Total error')
         plt.xlabel('Epoch')
         plt.ylabel('Mean error')
@@ -112,13 +137,13 @@ class NeuralNetwork:
 # -----------------------Test of the entire NN-------------------------------
 # XOR example
 input_set = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-output_set = np.array([[1], [0], [0], [1]])
+output_set = np.array([[0], [1], [1], [0]])
 nn = NeuralNetwork(layer_sizes=[2, 2, 1], learning_rate=0.2)
 
 # Mesure training time
 print("Starting training...")
 start_time = time.time()
-nn.train(input_set, output_set, epochs=15000)
+nn.train(input_set, output_set, epochs=15000, batch_size=2)
 end_time = time.time()
 print("Training over")
 
