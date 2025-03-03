@@ -1,7 +1,7 @@
 # Neural Network Class
 
-A customizable implementation of a neural network from scratch without using machine learning libraries.  
-This project showcases the design of a Neural Network capable of forward propagation, backpropagation, training, and testing.
+A customizable implementation of a neural network class from scratch without using machine learning libraries.  
+This project showcases the design of Neural Networks capable of forward propagation, backpropagation, training, and testing.
 
 ## Features
 - Fully implemented in Python using only NumPy and Matplotlib.
